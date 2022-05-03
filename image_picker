@@ -1,0 +1,57 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+
+class HomeCamera extends StatefulWidget {
+  const HomeCamera({Key? key}) : super(key: key);
+
+  @override
+  _HomeCameraState createState() => _HomeCameraState();
+}
+
+class _HomeCameraState extends State<HomeCamera> {
+
+  File? image;
+
+  Future pickImage(ImageSource source) async{
+    try{
+  final image = await ImagePicker().pickImage(source: source);
+  if(image == null) return;
+
+  final imageTemporary = await saveImagePermanently(image.path);
+  setState(() => this.image = imageTemporary);
+  }  on PlatformException catch (e) {
+      print('Failed to pick image : $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            image != null ? Image.file(image!) : FlutterLogo(size: 50,),
+            TextButton(onPressed: (){
+              pickImage(ImageSource.gallery);
+            }, child: Text('Pick Gallery')),
+            TextButton(onPressed:() {
+            pickImage(ImageSource.camera);
+            }, child: Text('Pick Camera')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<File> saveImagePermanently(String Imagepath) async{
+    final directory = await getApplicationDocumentsDirectory();
+    final name = basename(Imagepath);
+    final image  = File('${directory.path}/$name');
+    return File(Imagepath).copy(image.path);
+  }
+}
